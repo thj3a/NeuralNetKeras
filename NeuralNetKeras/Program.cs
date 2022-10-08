@@ -1,6 +1,4 @@
-﻿using TensorFlowNET.Examples;
-
-using Tensorflow;
+﻿using Tensorflow;
 using Tensorflow.Keras;
 using Tensorflow.Keras.ArgsDefinition;
 using Tensorflow.Keras.Engine;
