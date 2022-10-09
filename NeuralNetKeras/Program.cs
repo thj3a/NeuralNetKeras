@@ -11,6 +11,12 @@ using Tensorflow.Keras.Models;
 using Accord.Math;
 using MNIST.IO;
 using System.Diagnostics;
+using Accord.IO;
+using System.IO;
+using System.Xml.Serialization;
+using System.Xml;
+using Python.Runtime;
+using System.Diagnostics.Tracing;
 
 //Load train data
 var trainData = FileReaderMNIST.LoadImagesAndLables(
@@ -23,14 +29,18 @@ var testData = FileReaderMNIST.LoadImagesAndLables(
 
 
 //Build sequential model
-var model = keras.Sequential();
 
-model.add(keras.layers.Dense(units: 16, activation: keras.activations.Relu, input_shape: new Shape(28*28)));
-model.add(keras.layers.Dense(units: 16, activation: keras.activations.Relu));
-model.add(keras.layers.Dense(units: 10, activation: keras.activations.Softmax));
+var layers = new List<ILayer>();
+layers.Add(keras.layers.Dense(64, keras.activations.Relu, input_shape: new Shape(28*28)));
+for (int i=0; i<5;i++) layers.Add(keras.layers.Dense(64, keras.activations.Relu));
+layers.Add(keras.layers.Dense(10, keras.activations.Linear));
 
-// Model Compile
+var model = keras.Sequential(layers: layers);
+for (int i = 1, c = layers.Count; i < c; i++) model.Layers.Add(layers[i]);
+
+// Model Compile and Summary
 model.compile(optimizer: keras.optimizers.Adam(), loss: keras.losses.CategoricalCrossentropy(), metrics: new string[] { "accuracy" });
+model.summary();
 
 List<float[]> x_list = new();
 List<float[]> y_list = new();
@@ -45,9 +55,14 @@ var x_train = np.array(x_train2);
 var y_train2 = CreateRectangularArray(y_list);
 var y_train = np.array(y_train2);
 
-// Model Train
-model.fit(x_train, y_train, batch_size: 100, epochs: 10);
 
+Stopwatch sw = new();
+sw.Start();
+// Model Train
+model.fit(x_train, y_train, batch_size: 1000, epochs: 10, verbose: 1, use_multiprocessing: true);
+sw.Stop();
+
+Console.WriteLine($"Done! Total train time: {sw.Elapsed}");
 
 ////Save model and weights
 //string json = model.ToJson();
