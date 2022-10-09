@@ -33,7 +33,7 @@ var testData = FileReaderMNIST.LoadImagesAndLables(
 var layers = new List<ILayer>();
 layers.Add(keras.layers.Dense(64, keras.activations.Relu, input_shape: new Shape(28*28)));
 for (int i=0; i<5;i++) layers.Add(keras.layers.Dense(64, keras.activations.Relu));
-layers.Add(keras.layers.Dense(10, keras.activations.Linear));
+layers.Add(keras.layers.Dense(10, keras.activations.Softmax));
 
 var model = keras.Sequential(layers: layers);
 for (int i = 1, c = layers.Count; i < c; i++) model.Layers.Add(layers[i]);
