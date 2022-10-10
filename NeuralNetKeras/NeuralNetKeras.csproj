@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Accord.DataSets" Version="3.8.0" />
     <PackageReference Include="Accord.IO" Version="3.8.0" />
     <PackageReference Include="Colorful.Console" Version="1.2.15" />
     <PackageReference Include="Keras.NET" Version="3.8.5" />

@@ -12,34 +12,27 @@ using Accord.Math;
 using MNIST.IO;
 using System.Diagnostics;
 using Accord.IO;
+using Accord.DataSets;
 using System.IO;
 using System.Xml.Serialization;
 using System.Xml;
 using Python.Runtime;
 using System.Diagnostics.Tracing;
+using Microsoft.VisualBasic.FileIO;
+using Keras.Datasets;
+using Tensorflow.Keras.Datasets;
+using System.Drawing;
 
 //Load train data
 var trainData = FileReaderMNIST.LoadImagesAndLables(
-"./data/train-labels-idx1-ubyte.gz",
-"./data/train-images-idx3-ubyte.gz");
-
+@".\..\..\..\data\train-labels-idx1-ubyte.gz",
+@".\..\..\..\data\train-images-idx3-ubyte.gz");
+// Load test data
 var testData = FileReaderMNIST.LoadImagesAndLables(
-    "./data/t10k-labels-idx1-ubyte.gz",
-    "./data/t10k-images-idx3-ubyte.gz");
+    @".\..\..\..\data\t10k-labels-idx1-ubyte.gz",
+    @".\..\..\..\data\t10k-images-idx3-ubyte.gz");
 
-
-//Build sequential model
-
-var layers = new List<ILayer>();
-layers.Add(keras.layers.Dense(64, keras.activations.Relu, input_shape: new Shape(28*28)));
-for (int i=0; i<5;i++) layers.Add(keras.layers.Dense(64, keras.activations.Relu));
-layers.Add(keras.layers.Dense(10, keras.activations.Softmax));
-
-var model = keras.Sequential(layers: layers);
-for (int i = 1, c = layers.Count; i < c; i++) model.Layers.Add(layers[i]);
-
-// Model Compile and Summary
-model.compile(optimizer: keras.optimizers.Adam(), loss: keras.losses.CategoricalCrossentropy(), metrics: new string[] { "accuracy" });
+Sequential model = CreateModel(5, 64, 28 * 28, 10);
 model.summary();
 
 List<float[]> x_list = new();
@@ -59,20 +52,43 @@ var y_train = np.array(y_train2);
 Stopwatch sw = new();
 sw.Start();
 // Model Train
-model.fit(x_train, y_train, batch_size: 1000, epochs: 10, verbose: 1, use_multiprocessing: true);
+model.fit(x_train, y_train, batch_size: 1000, epochs: 5, verbose: 1, workers: 30);
 sw.Stop();
 
 Console.WriteLine($"Done! Total train time: {sw.Elapsed}");
 
-////Save model and weights
-//string json = model.ToJson();
-//File.WriteAllText("model.json", json);
-//model.SaveWeight("model.h5");
+//// Save model
+//model.save(SpecialDirectories.MyDocuments+ "\\model.h5");
+//model.save_weights(SpecialDirectories.MyDocuments + "\\model1.h5");
+//// nullify the model
+//model = null;
 
-////Load model and weight
-//var loaded_model = Sequential.ModelFromJson(File.ReadAllText("model.json"));
-//loaded_model.LoadWeight("model.h5");
+//// Reinstantiate the model 
+////model = CreateModel(5, 64, 28 * 28, 10);
+//// Load weights
+//model = keras.Sequential();
+//model.load_weights(SpecialDirectories.MyDocuments + "\\model1.h5");
 
+//Console.WriteLine("Done");
+
+
+static Sequential CreateModel(int layers, int neurons, int input_size, int output_size)
+{
+  // Prepare layers
+  var list_layers = new List<ILayer>();
+  list_layers.Add(keras.layers.Dense(neurons, keras.activations.Relu, input_shape: new Shape(input_size)));
+  for (int i = 0; i < layers; i++) list_layers.Add(keras.layers.Dense(64, keras.activations.Relu));
+  list_layers.Add(keras.layers.Dense(output_size, keras.activations.Softmax));
+
+  //Build sequential model
+  var model = keras.Sequential(layers: list_layers);
+  for (int i = 1, c = list_layers.Count; i < c; i++) model.Layers.Add(list_layers[i]);
+
+  // Model Compile
+  model.compile(optimizer: keras.optimizers.Adam(), loss: keras.losses.CategoricalCrossentropy(), metrics: new string[] { "accuracy" });
+  
+  return model;
+}
 
 static float[] byteArrToFloat(byte[,] byteArr)
 {
